@@ -1,0 +1,59 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Replace the value below
+    email: <you@address.com>
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+      selector: {}
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ambassador-certs
+  # cert-manager will put the resulting Secret in the same Kubernetes 
+  # namespace as the Certificate. You should create the certificate in 
+  # whichever namespace you want to configure a Host.
+  namespace: ambassador
+spec:
+  secretName: ambassador-certs
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  # Replace this with your FQDN or DNS
+  - <my_fqdn_replace_me>
+
+---
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: acme-challenge-mapping
+  namespace: ambassador
+spec:
+  prefix: /.well-known/acme-challenge/
+  rewrite: ""
+  service: acme-challenge-service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acme-challenge-service
+  namespace: ambassador
+spec:
+  ports:
+  - port: 80
+    targetPort: 8089
+  selector:
+    acme.cert-manager.io/http01-solver: "true"
