@@ -1,4 +1,8 @@
 #!/bin/bash
+
+## This is a script for renewing the Let's Encrypt Certificate managed by cert-manager. Run this when your certificate is about to expire,
+## or as part of a job that runs every 60 or 80 days or so. Let's Encrypt Certificates expire every 90 days.
+
 set -e
 
 export CERT_NAME=$(kubectl get certificates -n ambassador -o name | cut -d'/' -f 2)
